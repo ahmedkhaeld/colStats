@@ -4,31 +4,40 @@ statistical operations on a CSV file
 
 ---
 #### Benchmarking the tool
-`$ go test -bench . -benchtime=10x -run ^$ -benchmem | tee benchresults02m.txt`
+`$ go test -bench . -benchtime=10x -run ^$ -benchmem | tee benchresults01m.txt`
 ``` 
 goos: linux
 goarch: amd64
 pkg: github.com/ahmedkhaeld/colStats
 cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
-BenchmarkRun-4                10         359666931 ns/op        230547308 B/op      2530554 allocs/op
+BenchmarkRun-4                10         576020868 ns/op        230411072 B/op        2528036 allocs/op
 PASS
-ok      github.com/ahmedkhaeld/colStats 4.099s
+ok      github.com/ahmedkhaeld/colStats 6.387s
 
 ```
-`benchcmp benchresults01m.txt benchresults02m.txt`
+you can see right away that benchmark executed faster than the old 
+
+
+to compare between old and new benchmark executions
+<br> first: `$ go get -u -v golang.org/x/tools/cmd/benchcmp`
+
+run<br>
+`$benchcmp benchresults00m.txt benchresults01m.txt`
+
 ``` 
 benchmark          old ns/op     new ns/op     delta
-BenchmarkRun-4     576020868     359666931     -37.56%
+BenchmarkRun-4     882514991     576020868     -34.73%
 
 benchmark          old allocs     new allocs     delta
-BenchmarkRun-4     2528036        2530554        +0.10%
+BenchmarkRun-4     5043040        2528036        -49.87%
 
 benchmark          old bytes     new bytes     delta
-BenchmarkRun-4     230411072     230547308     +0.06%
+BenchmarkRun-4     564339412     230411072     -59.17%
+
 ```
-Another great improvement, it's almost twice as fast the previous version
-
-
+As you can see, the changes improved the program's execution
+time by close to 35% while reducing memory allocation by half.
+Less allocation, less garbage collection
 
 ---
 ### Profiling the tool
@@ -72,17 +81,20 @@ The profiling has changed slightly. The top part is still the same, as the same 
 
 ---
 ### Tracing the tool
-`$ go test -bench . -benchtime=10x -run ^$ -trace trace02.out`
-```
+
+`$ go test -bench . -benchtime=10x -run ^$ -trace trace01.out`
+``` 
 goos: linux
 goarch: amd64
 pkg: github.com/ahmedkhaeld/colStats
 cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
-BenchmarkRun-4                10         408675980 ns/op
+BenchmarkRun-4                10         620572318 ns/op
 PASS
-ok      github.com/ahmedkhaeld/colStats 4.584s
-```
-`go tool trace trace02.out`
+ok      github.com/ahmedkhaeld/colStats 6.954s
 
-view the trace link
->the program used all four CPUs, improving the speed of the tool. 
+```
+`$ go tool trace trace01.out`
+
+one thing that you'll notice by looking at the trace is that
+the program isn't using all four CPUs effectively. Only one Goroutine is
+running at a time
