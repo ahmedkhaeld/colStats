@@ -4,85 +4,59 @@ statistical operations on a CSV file
 
 ---
 #### Benchmarking the tool
-`$ go test -bench . -benchtime=10x -run ^$ -benchmem | tee benchresults02m.txt`
+`$ go test -bench . -benchtime=10x -run ^$ -benchmem | tee benchresults03m.txt`
 ``` 
 goos: linux
 goarch: amd64
 pkg: github.com/ahmedkhaeld/colStats
 cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
-BenchmarkRun-4                10         359666931 ns/op        230547308 B/op      2530554 allocs/op
+BenchmarkRun-4                10         355138870 ns/op        230413111 B/op      2528052 allocs/op
 PASS
-ok      github.com/ahmedkhaeld/colStats 4.099s
+ok      github.com/ahmedkhaeld/colStats 3.984s
+
 
 ```
-`benchcmp benchresults01m.txt benchresults02m.txt`
+`benchcmp benchresults02m.txt benchresults03m.txt`
 ``` 
 benchmark          old ns/op     new ns/op     delta
-BenchmarkRun-4     576020868     359666931     -37.56%
+BenchmarkRun-4     359666931     351380942     -2.30%
 
 benchmark          old allocs     new allocs     delta
-BenchmarkRun-4     2528036        2530554        +0.10%
+BenchmarkRun-4     2530554        2528051        -0.10%
 
 benchmark          old bytes     new bytes     delta
-BenchmarkRun-4     230411072     230547308     +0.06%
+BenchmarkRun-4     230547308     230413101     -0.06%
+
 ```
-Another great improvement, it's almost twice as fast the previous version
+as you can see this version runs over 2.3% faster than previous
 
+Compare this result to the original version
+`benchcmp benchresults00m.txt benchresults03m.txt`
 
-
----
-### Profiling the tool
-`$ go test -bench . -benchtime=10x -run ^$ -cpuprofile cpu01.pprof`
 ``` 
-goos: linux
-goarch: amd64
-pkg: github.com/ahmedkhaeld/colStats
-cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
-BenchmarkRun-4                10         580915778 ns/op
-PASS
-ok      github.com/ahmedkhaeld/colStats 6.645s
-```
+benchmark          old ns/op     new ns/op     delta
+BenchmarkRun-4     882514991     351380942     -60.18%
 
-`$ go tool pprof cpu01.pprof`
-``` 
-File: colStats.test
-Type: cpu
-Time: Nov 29, 2022 at 3:54pm (EET)
-Duration: 6.64s, Total samples = 7.12s (107.27%)
-Entering interactive mode (type "help" for commands, "o" for options)
-(pprof) top -cum
-Showing nodes accounting for 2400ms, 33.71% of 7120ms total
-Dropped 121 nodes (cum <= 35.60ms)
-Showing top 10 nodes out of 79
-      flat  flat%   sum%        cum   cum%
-         0     0%     0%     6420ms 90.17%  github.com/ahmedkhaeld/colStats.BenchmarkRun
-         0     0%     0%     6420ms 90.17%  github.com/ahmedkhaeld/colStats.run
-         0     0%     0%     6420ms 90.17%  testing.(*B).runN
-         0     0%     0%     6400ms 89.89%  github.com/ahmedkhaeld/colStats.consolidate
-     230ms  3.23%  3.23%     5940ms 83.43%  github.com/ahmedkhaeld/colStats.csv2float
-         0     0%  3.23%     5820ms 81.74%  testing.(*B).launch
-     110ms  1.54%  4.78%     4220ms 59.27%  encoding/csv.(*Reader).Read
-    1270ms 17.84% 22.61%     4110ms 57.72%  encoding/csv.(*Reader).readRecord
-     190ms  2.67% 25.28%     1260ms 17.70%  runtime.slicebytetostring
-     600ms  8.43% 33.71%     1210ms 16.99%  runtime.mallocgc
-(pprof) 
+benchmark          old allocs     new allocs     delta
+BenchmarkRun-4     5043040        2528051        -49.87%
+
+benchmark          old bytes     new bytes     delta
+BenchmarkRun-4     564339412     230413101     -59.17%
 
 ```
-The profiling has changed slightly. The top part is still the same, as the same functions are responsible for executing the program. The csv2float function is still there, which also makes sense. But in the bottom part of the output, the functions related to memory allocation and garbage collection are no longer in the top 10. 
+see how much we've improved the performance
+this version is over almost three times faster than original.
+it allocates nearly 60% less memory
 
----
-### Tracing the tool
-`$ go test -bench . -benchtime=10x -run ^$ -trace trace02.out`
+`$go build`<br>
+`$ time ./colStats -op avg -col 2 testdata/benchmark/*.csv`
 ```
-goos: linux
-goarch: amd64
-pkg: github.com/ahmedkhaeld/colStats
-cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
-BenchmarkRun-4                10         408675980 ns/op
-PASS
-ok      github.com/ahmedkhaeld/colStats 4.584s
-```
-`go tool trace trace02.out`
+50006.0653788
 
-view the trace link
->the program used all four CPUs, improving the speed of the tool. 
+real    0m0.398s
+user    0m1.241s
+sys     0m0.059s
+
+```
+this time, the program processed all one thousand files in 0.38 seconds
+compared to the original one second
