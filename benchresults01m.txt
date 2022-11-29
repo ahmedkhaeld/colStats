@@ -1,0 +1,7 @@
+goos: linux
+goarch: amd64
+pkg: github.com/ahmedkhaeld/colStats
+cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+BenchmarkRun-4   	      10	 576020868 ns/op	230411072 B/op	 2528036 allocs/op
+PASS
+ok  	github.com/ahmedkhaeld/colStats	6.387s
